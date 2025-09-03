@@ -37,5 +37,7 @@ public class Banking {
                     break;
             }
         }
+
+        scan.close();
     }
 }
