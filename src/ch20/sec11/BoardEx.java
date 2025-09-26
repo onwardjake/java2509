@@ -9,6 +9,7 @@ public class BoardEx {
     private Scanner sc = new Scanner(System.in);
     private Connection conn;
     private boolean DEBUG_MODE = true;
+    private boolean ADD_SAMPLE_DATA = true;
     private List<Board> boards = new ArrayList<>();
 
     //////////////////////////////////////////////////////////
@@ -143,18 +144,47 @@ public class BoardEx {
     }
 
     //////////////////////////////////////////////////////////
+    /// insertBoard : DB에 게시물을 추가한다
+    //////////////////////////////////////////////////////////
+    private void insertBoard(Board board){
+        try {
+            // SQL 쿼리 문을 만든다
+            // INSERT INTO boards VALUE (NULL, N'봄의 정원', N'정원의 꽃이 이쁘네요.', 'winter', now(), NULL, NULL);
+            String sql = new StringBuilder()
+                    .append("INSERT INTO boards ")
+                    .append("VALUES(NULL, ?, ?, ?, now(), NULL, NULL)")
+                    .toString();
+
+            // 쿼리를 실행한다
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, board.getBtitle());
+            ps.setString(2, board.getBcontent());
+            ps.setString(3, board.getBwriter());
+            if(DEBUG_MODE) System.out.println(ps);
+            ps.executeUpdate();
+
+            // DB에 INSERT가 성공적으로 수행되었다면, 게시물 목록을 DB에서 다시 받아와서 업데이트 한다
+            readBoards();
+        } catch (SQLException e){
+            e.printStackTrace();
+            exit();
+        }
+    }
+
+    //////////////////////////////////////////////////////////
     /// create : 새 게시물을 작성하고, DB에 저장한다
     //////////////////////////////////////////////////////////
     private void create() {
         // 새 게시물 정보를 입력받는다
+        Board board = new Board();
         System.out.println("");
         System.out.println("[새 게시물 작성]");
         System.out.print("작성자: ");
-        String writer = sc.nextLine();
+        board.setBwriter(sc.nextLine());
         System.out.print("제목: ");
-        String title = sc.nextLine();
+        board.setBtitle(sc.nextLine());
         System.out.print("내용: ");
-        String content = sc.nextLine();
+        board.setBcontent(sc.nextLine());
         System.out.println("--------------------------------------------------------------");
         while(true) {
             System.out.println("1. 저장 | 2. 취소");
@@ -172,28 +202,7 @@ public class BoardEx {
             }
         }
 
-        try {
-            // SQL 쿼리 문을 만든다
-            // INSERT INTO boards VALUE (NULL, N'봄의 정원', N'정원의 꽃이 이쁘네요.', 'winter', now(), NULL, NULL);
-            String sql = new StringBuilder()
-                    .append("INSERT INTO boards ")
-                    .append("VALUES(NULL, ?, ?, ?, now(), NULL, NULL)")
-                    .toString();
-
-            // 쿼리를 실행한다
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, title);
-            ps.setString(2, content);
-            ps.setString(3, writer);
-            if(DEBUG_MODE) System.out.println(ps);
-            ps.executeUpdate();
-
-            // DB에 INSERT가 성공적으로 수행되었다면, 게시물 목록을 DB에서 다시 받아와서 업데이트 한다
-            readBoards();
-        } catch (SQLException e){
-            e.printStackTrace();
-            exit();
-        }
+        insertBoard(board);
     }
 
     private void update(int bno, Board board) {
@@ -366,6 +375,24 @@ public class BoardEx {
     /// execute : 프로그램 실행
     //////////////////////////////////////////////////////////
     public void execute(){
+        // 샘플 데이터 추가
+        if(DEBUG_MODE && ADD_SAMPLE_DATA){
+            // 샘플 게시물 3개를 추가한다
+            Board board = new Board();
+            board.setBwriter("winter");
+            board.setBtitle("봄의 정원");
+            board.setBcontent("정원의 꽃이 이쁘네요.");
+            insertBoard(board);
+
+            board.setBtitle("눈오는 날");
+            board.setBcontent("함박눈이 내려요.");
+            insertBoard(board);
+
+            board.setBtitle("크리스마스");
+            board.setBcontent("메리 크리스마스~");
+            insertBoard(board);
+        }
+
         // boards DB에서 게시글을 가져온다
         readBoards();
 
